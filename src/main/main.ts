@@ -9,11 +9,12 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, BrowserView, Event } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
 
 class AppUpdater {
   constructor() {
@@ -24,12 +25,29 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let browserView: BrowserView | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
+// ipcMain.on('ai', async (event, arg) => {
+//   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
+//   console.log(msgTemplate(arg));
+//   event.reply('ai', msgTemplate('pong'));
+// });
+
+
+ipcMain.handle('message', async (event, message) => {
+  // do stuff
+  // await awaitableProcess();
+  if (message.browserwindow_dimension_update && browserView) {
+    try {
+      console.log('update bound', message.browserwindow_dimension_update.bound)
+      browserView.setBounds(message.browserwindow_dimension_update.bound);
+    } catch {
+      console.log('Cannot set bounds of browserview', message.browserwindow_dimension_update.bound);
+    }
+  }
+
+  return "foo";
+})
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -39,9 +57,9 @@ if (process.env.NODE_ENV === 'production') {
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
-if (isDebug) {
-  require('electron-debug')();
-}
+// if (isDebug) {
+//   require('electron-debug')();
+// }
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -110,6 +128,11 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  browserView = new BrowserView()
+  mainWindow.setBrowserView(browserView)
+  browserView.setBounds({ x: 0, y: 0, width: 0, height: 0 })
+  browserView.webContents.loadURL('https://reddit.com');
 };
 
 /**
