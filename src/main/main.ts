@@ -39,7 +39,7 @@ ipcMain.handle('message', async (event, message) => {
   // await awaitableProcess();
   if (message.browserwindow_dimension_update && browserView) {
     try {
-      console.log('update bound', message.browserwindow_dimension_update.bound)
+      // console.log('update bound', message.browserwindow_dimension_update.bound)
       browserView.setBounds(message.browserwindow_dimension_update.bound);
     } catch {
       console.log('Cannot set bounds of browserview', message.browserwindow_dimension_update.bound);
@@ -89,6 +89,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
+    autoHideMenuBar: true,
     width: 1024,
     height: 728,
     icon: getAssetPath('icon.png'),
