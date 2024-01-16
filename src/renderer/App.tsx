@@ -3,7 +3,15 @@ import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 
 import 'tailwindcss/tailwind.css';
 import { useLayoutEffect, useState, useRef, useEffect } from 'react';
-import { Plus, ArrowUp, Blocks } from 'lucide-react';
+import {
+  Plus,
+  ArrowUp,
+  Blocks,
+  Search,
+  Workflow,
+  Camera,
+  Container,
+} from 'lucide-react';
 import createDOMPurify from 'dompurify';
 import { marked } from 'marked';
 import defaultAvatar from '/assets/img/default-avatar.jpg';
@@ -55,6 +63,7 @@ function MessageView({
 function Hello() {
   const [mode, setMode] = useState<'default' | 'knowledge-base'>('default');
   const [input, setInput] = useState('');
+  const [dataUrl, setDataUrl] = useState('');
   const textarea_ref = useRef<any>();
   const browserview_ref = useRef<any>();
   // const running_action = useSignal<Action>();
@@ -81,6 +90,19 @@ function Hello() {
       360,
     )}px`;
   }, [input]);
+
+  useEffect(() => {
+    window.electron.send({
+      add_browserview: {
+        bound: {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+        },
+      },
+    });
+  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -182,95 +204,131 @@ function Hello() {
   };
 
   return (
-    <div className="flex">
-      <div className="border-r border-neutral-100 flex flex-col bg-neutral-50 p-4 flex-none">
-        <button>
-          <Blocks className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
-        </button>
-      </div>
-
-      <div className="flex-1 flex h-screen flex-col text-neutral-950">
-        <div className="flex flex-none items-center space-x-2 overflow-hidden border-b border-neutral-50 px-4 py-2">
-          <p className="text-sm font-semibold text-neutral-800">
-            Unamed Workspace
-            {/* <span className="text-neutral-400"> / browser</span> */}
-          </p>
-
-          <div className="flex-1 px-2 py-1 rounded bg-neutral-100 text-neutral-600">
-            <p>https://reddit.com</p>
-          </div>
+    <div className=" h-screen flex flex-col ">
+      <div className="flex-1 flex">
+        <div className="border-r border-neutral-100 flex flex-col bg-neutral-50 p-4 flex-none space-y-6">
+          <button>
+            <Blocks className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
+          <button>
+            <Search className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
+          <button>
+            <Workflow className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
+          <button
+            onClick={async () => {
+              console.log('test');
+              const { data } = await window.electron.send({
+                capture_page: true,
+              });
+              console.log('x', data);
+              setDataUrl(data ?? '');
+            }}
+          >
+            <Camera className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
+          <button
+            onClick={async () => {
+              const { browserviews } = await window.electron.send({
+                get_browserviews: true,
+              });
+              console.log('browserviews', browserviews);
+            }}
+          >
+            <Container className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
         </div>
 
-        <div className="flex max-h-full flex-1 overflow-auto ">
-          <div
-            className={`border-r border-neutral-50 relative flex flex-col overflow-auto  transition-[max-width] duration-300  scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200  scrollbar-thumb-rounded-full ${
-              mode === 'default' ? ' w-1/3 max-w-full ' : ' max-w-0 '
-            }`}
-          >
-            <div className="sticky top-0 z-50 flex flex-none items-center bg-gradient-to-b from-white px-2 py-3">
-              {/* <div className="flex-1" /> */}
-              {/* <div className="flex-1 text-xs text-neutral-500">
+        <div className="flex-1 flex flex-col text-neutral-950">
+          <img className="w-32 h-auto" src={dataUrl} />
+
+          <div className="flex flex-none items-center space-x-2 overflow-hidden border-b border-neutral-50 px-4 py-2">
+            <p className="text-sm text-neutral-600">
+              Unamed Workspace
+              {/* <span className="text-neutral-400"> / browser</span> */}
+            </p>
+
+            {/* <div className="flex-1 px-2 py-1 rounded bg-neutral-100 text-neutral-600">
+            <p>https://reddit.com</p>
+          </div> */}
+          </div>
+
+          <div className="flex max-h-full flex-1 overflow-auto ">
+            <div
+              className={`border-r border-neutral-50 relative flex flex-col overflow-auto  transition-[max-width] duration-300  scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200  scrollbar-thumb-rounded-full ${
+                mode === 'default' ? ' w-1/3 max-w-full ' : ' max-w-0 '
+              }`}
+            >
+              <div className="sticky top-0 z-50 flex flex-none items-center bg-gradient-to-b from-white px-2 py-3">
+                {/* <div className="flex-1" /> */}
+                {/* <div className="flex-1 text-xs text-neutral-500">
                 <p>You are working on this workspace together</p>
               </div> */}
-              <div className="flex flex-1">
-                <div className="flex-1" />
-                <button
-                  type="submit"
-                  className="flex flex-none items-center space-x-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
-                >
-                  <Plus className="h-4 w-4" />
-                  <p>New chat</p>
-                </button>
+                <div className="flex flex-1">
+                  <div className="flex-1" />
+                  <button
+                    type="submit"
+                    className="flex flex-none items-center space-x-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <p>New chat</p>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1 px-4 pb-4">
-              {messages.map((m, i) => (
-                <MessageView
-                  key={`${m.content}`}
-                  message={m}
-                  action={
-                    // m === latest_AI_message.value
-                    //   ? running_action.value
-                    //   :
-                    undefined
-                  }
-                />
-              ))}
-            </div>
-
-            <div className="sticky bottom-0 mx-2 flex-none bg-white bg-gradient-to-t from-white pb-4">
-              <div className="flex items-start overflow-hidden rounded border border-neutral-300 shadow">
-                <textarea
-                  ref={textarea_ref}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submit();
+              <div className="flex-1 px-4 pb-4 space-y-4">
+                {messages.map((m, i) => (
+                  <MessageView
+                    key={`${m.content}`}
+                    message={m}
+                    action={
+                      // m === latest_AI_message.value
+                      //   ? running_action.value
+                      //   :
+                      undefined
                     }
-                  }}
-                  className="w-full resize-none  bg-transparent p-4 text-neutral-950 placeholder:text-neutral-600 focus:outline-none scrollbar-thumb-rounded-full"
-                  placeholder="What's interesting?"
-                />
+                  />
+                ))}
+              </div>
 
-                <button
-                  type="submit"
-                  onClick={submit}
-                  disabled={input.length === 0}
-                  className="mr-2 mt-2 rounded bg-neutral-300 p-2 transition-all enabled:hover:bg-black enabled:hover:text-white disabled:text-neutral-500 "
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </button>
+              <div className="sticky bottom-0 mx-2 flex-none bg-white bg-gradient-to-t from-white pb-4">
+                <div className="flex items-start overflow-hidden rounded border border-neutral-300 shadow">
+                  <textarea
+                    ref={textarea_ref}
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submit();
+                      }
+                    }}
+                    className="w-full resize-none  bg-transparent p-4 text-neutral-950 placeholder:text-neutral-600 focus:outline-none scrollbar-thumb-rounded-full"
+                    placeholder="What's interesting?"
+                  />
+
+                  <button
+                    type="submit"
+                    onClick={submit}
+                    disabled={input.length === 0}
+                    className="mr-2 mt-2 rounded bg-neutral-300 p-2 transition-all enabled:hover:bg-black enabled:hover:text-white disabled:text-neutral-500 "
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex-1 " ref={browserview_ref}></div>
+            <div className="flex-1 " ref={browserview_ref}></div>
+          </div>
         </div>
+      </div>
+
+      <div className="flex-none px-2 py-1 bg-neutral-100 text-neutral-600 text-xs">
+        <p>https://reddit.com</p>
       </div>
     </div>
   );

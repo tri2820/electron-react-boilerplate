@@ -13,7 +13,11 @@ import { app, BrowserWindow, shell, ipcMain, BrowserView, Event } from 'electron
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, sleep } from './util';
+
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 
 
 class AppUpdater {
@@ -25,7 +29,7 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-let browserView: BrowserView | null = null;
+// let browserView: BrowserView | null = null;
 
 // ipcMain.on('ai', async (event, arg) => {
 //   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -37,12 +41,56 @@ let browserView: BrowserView | null = null;
 ipcMain.handle('message', async (event, message) => {
   // do stuff
   // await awaitableProcess();
-  if (message.browserwindow_dimension_update && browserView) {
+  if (message.browserwindow_dimension_update && mainWindow) {
     try {
-      // console.log('update bound', message.browserwindow_dimension_update.bound)
-      browserView.setBounds(message.browserwindow_dimension_update.bound);
+      mainWindow.getBrowserViews().forEach((v,i) => {
+        // if (i == 0) {
+          v.setBounds(message.browserwindow_dimension_update.bound);
+        // } else {
+        //   v.setBounds({
+        //     x: 300,
+        //     y: 300,
+        //     width: 200,
+        //     height: 200
+        //   });
+        // }
+        
+      })
     } catch {
       console.log('Cannot set bounds of browserview', message.browserwindow_dimension_update.bound);
+    }
+  }
+
+  if (message.capture_page && mainWindow){
+    const browserView = mainWindow.getBrowserViews().at(0);
+    if (!browserView) return {
+      error: true
+    }
+
+    const img = await browserView.webContents.capturePage();
+    return {
+      data: img?.toDataURL()
+    }
+  }
+
+  if (message.add_browserview && mainWindow) {
+    if (mainWindow.getBrowserViews().length > 0) {
+      console.log('skipped create_browserview, only support one view for now');
+      return 
+    }
+
+    console.log('create_browserview');
+    const browserView = new BrowserView();
+    mainWindow.addBrowserView(browserView);
+    browserView.setBounds(message.add_browserview.bound);
+    browserView.webContents.loadURL('https://reddit.com');
+  }
+
+  if (message.get_browserviews && mainWindow) {
+    const browserviews = mainWindow.getBrowserViews();
+    console.log('browserviews', browserviews);
+    return {
+      browserviews: browserviews.length
     }
   }
 
@@ -97,6 +145,7 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
+      backgroundThrottling: false, 
     },
   });
 
@@ -129,11 +178,6 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
-
-  browserView = new BrowserView()
-  mainWindow.setBrowserView(browserView)
-  browserView.setBounds({ x: 0, y: 0, width: 0, height: 0 })
-  browserView.webContents.loadURL('https://reddit.com');
 };
 
 /**
