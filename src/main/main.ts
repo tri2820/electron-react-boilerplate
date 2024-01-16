@@ -80,7 +80,29 @@ ipcMain.handle('message', async (event, message) => {
     }
 
     console.log('create_browserview');
-    const browserView = new BrowserView();
+    const browserView = new BrowserView(
+      {
+        webPreferences: {
+          zoomFactor: 0.5,
+          contextIsolation: true,
+          preload: app.isPackaged
+        ? path.join(__dirname, 'browserview_preload.js')
+        : path.join(__dirname, '../../.erb/dll/browserview_preload.js')
+        },
+      }
+    );
+
+    browserView.webContents.on('dom-ready', () => {
+      browserView.webContents.setZoomFactor(0.5);
+      browserView.webContents.openDevTools();
+    })
+
+
+// win.once('ready-to-show', () => {
+//     win.webContents.setZoomFactor(1.5);
+//     ......
+// }
+
     mainWindow.addBrowserView(browserView);
     browserView.setBounds(message.add_browserview.bound);
     browserView.webContents.loadURL('https://reddit.com');
@@ -89,6 +111,10 @@ ipcMain.handle('message', async (event, message) => {
   if (message.get_browserviews && mainWindow) {
     const browserviews = mainWindow.getBrowserViews();
     console.log('browserviews', browserviews);
+    // browserviews.forEach(v => {
+    //   // v.webContents.setZoomLevel(0.5)
+    //   v.webContents.setZoomFactor(0.5)
+    // })
     return {
       browserviews: browserviews.length
     }
