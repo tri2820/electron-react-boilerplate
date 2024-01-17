@@ -15,6 +15,7 @@ module.exports = {
     'no-bitwise': 'off',
     'no-plusplus': 'off',
     'consistent-return': 'off',
+    'no-underscore-dangle': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',

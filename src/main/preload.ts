@@ -1,32 +1,16 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-// export type Channels = 'ipc-example' | 'ai';
-
-const electronHandler = {
+const electron = {
   send: (arg: any) => ipcRenderer.invoke('message', arg),
 };
-
-// const electronHandler = {
-//   ipcRenderer: {
-//     sendMessage(channel: Channels, ...args: unknown[]) {
-//       ipcRenderer.send(channel, ...args);
-//     },
-//     on(channel: Channels, func: (...args: unknown[]) => void) {
-//       const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
-//         func(...args);
-//       ipcRenderer.on(channel, subscription);
-
-//       return () => {
-//         ipcRenderer.removeListener(channel, subscription);
-//       };
-//     },
-//     once(channel: Channels, func: (...args: unknown[]) => void) {
-//       ipcRenderer.once(channel, (_event, ...args) => func(...args));
-//     },
-//   },
-// };
-
-contextBridge.exposeInMainWorld('electron', electronHandler);
+const env = {
+  SUPABASE_URL: 'https://vwssqtmlbzybjyowynfw.supabase.co',
+  SUPBASE_ANON_KEY:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3c3NxdG1sYnp5Ymp5b3d5bmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ2MzM4MTUsImV4cCI6MjAyMDIwOTgxNX0.bpIaM6IKnllSmuc47rXr-d0wjszYBLBH3ubAOfcTs0c',
+};
+contextBridge.exposeInMainWorld('electron', electron);
+contextBridge.exposeInMainWorld('env', env);
 // contextBridge.exposeInMainWorld('api', api);
 
-export type ElectronHandler = typeof electronHandler;
+export type ElectronHandler = typeof electron;
+export type Env = typeof env;

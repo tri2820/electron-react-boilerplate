@@ -35,6 +35,7 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let hiddenBrowserViews: BrowserView[] = [];
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -178,6 +179,12 @@ ipcMain.handle('message', async (event, message) => {
   }
 
   if (message.add_browserview && mainWindow) {
+    const topHidden = hiddenBrowserViews.at(0);
+    if (topHidden) {
+      mainWindow.addBrowserView(topHidden);
+      return;
+    }
+
     if (mainWindow.getBrowserViews().length > 0) {
       console.log('skipped create_browserview, only support one view for now');
       return;
@@ -206,12 +213,9 @@ ipcMain.handle('message', async (event, message) => {
     browserView.webContents.loadURL('https://reddit.com');
   }
 
-  if (message.get_browserviews && mainWindow) {
+  if (message.gethiddenBrowserViews && mainWindow) {
     const browserviews = mainWindow.getBrowserViews();
     console.log('browserviews', browserviews);
-    // browserviews.forEach(v => {
-    //   v.webContents.setZoomFactor(0.5)
-    // })
     return {
       browserviews: browserviews.length,
     };
@@ -229,5 +233,10 @@ ipcMain.handle('message', async (event, message) => {
     console.log('cleared storage');
   }
 
-  return 'foo';
+  if (message.hideBrowserViews && mainWindow) {
+    const browserviews = mainWindow.getBrowserViews();
+    hiddenBrowserViews = browserviews;
+    console.log('remove', hiddenBrowserViews);
+    browserviews.forEach((v) => mainWindow!.removeBrowserView(v));
+  }
 });
