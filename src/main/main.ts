@@ -89,7 +89,11 @@ const createWindow = async () => {
     },
   });
 
-  mainWindow.loadURL(resolveHtmlPath('index.html'));
+  mainWindow.loadURL(
+    // 'https://hyperdimension.vercel.app',
+    'http://localhost:5173/',
+    // resolveHtmlPath('index.html'),
+  );
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -238,5 +242,11 @@ ipcMain.handle('message', async (event, message) => {
     hiddenBrowserViews = browserviews;
     console.log('remove', hiddenBrowserViews);
     browserviews.forEach((v) => mainWindow!.removeBrowserView(v));
+  }
+
+  if (message.open_browserview_devtools && mainWindow) {
+    const view = mainWindow.getBrowserViews().at(0);
+    if (!view) return;
+    view.webContents.openDevTools();
   }
 });

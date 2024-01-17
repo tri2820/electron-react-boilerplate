@@ -73,11 +73,19 @@ function main() {
 
     const visibleElements = queryDeepSelectorAll((el: Element) => {
       const clickable =
-        // ['A', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'VIDEO'].includes(
-        //   el.tagName,
-        // ) ||
+        [
+          'A',
+          'BUTTON',
+          'INPUT',
+          'TEXTAREA',
+          'SELECT',
+          'VIDEO',
+          'DETAILS',
+          'IFRAME',
+          'IMG',
+        ].includes(el.tagName) ||
         // (el as HTMLElement).onclick ||
-        window.getComputedStyle(el).cursor === 'pointer' ||
+        // window.getComputedStyle(el).cursor === 'pointer' ||
         window.getComputedStyle(el).cursor === 'text';
       const notNavigatable = (el.attributes as any).tabindex?.value === -1;
       if (!clickable || notNavigatable) return false;
