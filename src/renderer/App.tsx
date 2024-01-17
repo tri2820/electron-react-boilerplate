@@ -11,10 +11,11 @@ import {
   Workflow,
   Camera,
   Container,
+  Eraser,
 } from 'lucide-react';
 import createDOMPurify from 'dompurify';
 import { marked } from 'marked';
-import defaultAvatar from '/assets/img/default-avatar.jpg';
+// import defaultAvatar from '../../../../../assets/img/default-avatar.jpg';
 
 const DOMPurify = createDOMPurify();
 
@@ -40,10 +41,12 @@ function MessageView({
 
   return (
     <div className="flex space-x-2 ">
-      <img
+      {/* <img
+        alt="Avatar"
         src={defaultAvatar}
         className="h-12 w-12 flex-none rounded-full border"
-      />
+      /> */}
+      <div className="h-12 w-12 flex-none rounded-full border" />
 
       <div className="flex-1 rounded-xl">
         <p className="font-bold">
@@ -64,10 +67,10 @@ function Hello() {
   const [mode, setMode] = useState<'default' | 'knowledge-base'>('default');
   const [input, setInput] = useState('');
   const [dataUrl, setDataUrl] = useState('');
-  const textarea_ref = useRef<any>();
-  const browserview_ref = useRef<any>();
+  const textAreaRef = useRef<any>();
+  const browserViewRef = useRef<any>();
   // const running_action = useSignal<Action>();
-  // const latest_AI_message = useSignal<Message>();
+  // const latestAIMessage = useSignal<Message>();
   // const main_args = useSignal<string>("");
   // const rect = useSignal<{
   //   width: number;
@@ -79,14 +82,14 @@ function Hello() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Let's have an adventure together!`,
+      content: `What do you want to automate?`,
     },
   ]);
 
   useLayoutEffect(() => {
-    textarea_ref.current.style.height = 'inherit';
-    textarea_ref.current.style.height = `${Math.min(
-      textarea_ref.current.scrollHeight,
+    textAreaRef.current.style.height = 'inherit';
+    textAreaRef.current.style.height = `${Math.min(
+      textAreaRef.current.scrollHeight,
       360,
     )}px`;
   }, [input]);
@@ -106,7 +109,7 @@ function Hello() {
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
-      const rect = browserview_ref.current?.getBoundingClientRect();
+      const rect = browserViewRef.current?.getBoundingClientRect();
       if (!rect) return;
       window.electron.send({
         browserwindow_dimension_update: {
@@ -120,15 +123,16 @@ function Hello() {
       });
     });
 
-    observer.observe(browserview_ref.current);
+    observer.observe(browserViewRef.current);
     return () =>
-      browserview_ref.current && observer.unobserve(browserview_ref.current);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      browserViewRef.current && observer.unobserve(browserViewRef.current);
   }, []);
 
   const submit = async () => {
     setInput('');
     // main_args.value = "";
-    const latest_AI_message: Message = {
+    const latestAIMessage: Message = {
       role: 'assistant',
       content: '',
     };
@@ -138,7 +142,7 @@ function Hello() {
         role: 'user',
         content: input,
       },
-      latest_AI_message,
+      latestAIMessage,
     ]);
 
     // const result = await do_extract(text);
@@ -166,7 +170,7 @@ function Hello() {
     //   console.log("msg", msg);
     //   if (msg.token) {
     //     running_action.value = undefined;
-    //     latest_AI_message.value.content += msg.token;
+    //     latestAIMessage.value.content += msg.token;
     //     messages.value = [...messages.value];
     //   }
 
@@ -176,7 +180,7 @@ function Hello() {
     //       content: string;
     //     } = parsePartialJson(reply);
     //     console.log("reply_parsed", reply_parsed);
-    //     latest_AI_message.value.content = reply_parsed?.content ?? "";
+    //     latestAIMessage.value.content = reply_parsed?.content ?? "";
     //     messages.value = [...messages.value];
     //   }
 
@@ -238,10 +242,21 @@ function Hello() {
           >
             <Container className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
           </button>
+
+          <button
+            onClick={async () => {
+              await window.electron.send({
+                reset: true,
+              });
+              console.log('reset done');
+            }}
+          >
+            <Eraser className="w-6 h-6 text-neutral-600 hover:text-black transition-all" />
+          </button>
         </div>
 
         <div className="flex-1 flex flex-col text-neutral-950">
-          <img className="w-32 h-auto" src={dataUrl} />
+          {/* <img alt="test" className="w-32 h-auto" src={dataUrl} /> */}
 
           <div className="flex flex-none items-center space-x-2 overflow-hidden border-b border-neutral-50 px-4 py-2">
             <p className="text-sm text-neutral-600">
@@ -283,7 +298,7 @@ function Hello() {
                     key={`${m.content}`}
                     message={m}
                     action={
-                      // m === latest_AI_message.value
+                      // m === latestAIMessage.value
                       //   ? running_action.value
                       //   :
                       undefined
@@ -295,7 +310,7 @@ function Hello() {
               <div className="sticky bottom-0 mx-2 flex-none bg-white bg-gradient-to-t from-white pb-4">
                 <div className="flex items-start overflow-hidden rounded border border-neutral-300 shadow">
                   <textarea
-                    ref={textarea_ref}
+                    ref={textAreaRef}
                     value={input}
                     onChange={(e) => {
                       setInput(e.target.value);
@@ -322,7 +337,7 @@ function Hello() {
               </div>
             </div>
 
-            <div className="flex-1 " ref={browserview_ref}></div>
+            <div className="flex-1 " ref={browserViewRef} />
           </div>
         </div>
       </div>

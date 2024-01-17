@@ -9,7 +9,14 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, BrowserView, Event } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  BrowserView,
+  Event,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -18,7 +25,6 @@ import { resolveHtmlPath, sleep } from './util';
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
-
 
 class AppUpdater {
   constructor() {
@@ -29,99 +35,6 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-// let browserView: BrowserView | null = null;
-
-// ipcMain.on('ai', async (event, arg) => {
-//   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-//   console.log(msgTemplate(arg));
-//   event.reply('ai', msgTemplate('pong'));
-// });
-
-
-ipcMain.handle('message', async (event, message) => {
-  // do stuff
-  // await awaitableProcess();
-  if (message.browserwindow_dimension_update && mainWindow) {
-    try {
-      mainWindow.getBrowserViews().forEach((v,i) => {
-        // if (i == 0) {
-          v.setBounds(message.browserwindow_dimension_update.bound);
-        // } else {
-        //   v.setBounds({
-        //     x: 300,
-        //     y: 300,
-        //     width: 200,
-        //     height: 200
-        //   });
-        // }
-        
-      })
-    } catch {
-      console.log('Cannot set bounds of browserview', message.browserwindow_dimension_update.bound);
-    }
-  }
-
-  if (message.capture_page && mainWindow){
-    const browserView = mainWindow.getBrowserViews().at(0);
-    if (!browserView) return {
-      error: true
-    }
-
-    const img = await browserView.webContents.capturePage();
-    return {
-      data: img?.toDataURL()
-    }
-  }
-
-  if (message.add_browserview && mainWindow) {
-    if (mainWindow.getBrowserViews().length > 0) {
-      console.log('skipped create_browserview, only support one view for now');
-      return 
-    }
-
-    console.log('create_browserview');
-    const browserView = new BrowserView(
-      {
-        webPreferences: {
-          zoomFactor: 0.5,
-          contextIsolation: true,
-          preload: app.isPackaged
-        ? path.join(__dirname, 'browserview_preload.js')
-        : path.join(__dirname, '../../.erb/dll/browserview_preload.js')
-        },
-      }
-    );
-
-    browserView.webContents.on('dom-ready', () => {
-      browserView.webContents.setZoomFactor(0.5);
-      browserView.webContents.openDevTools();
-    })
-
-
-// win.once('ready-to-show', () => {
-//     win.webContents.setZoomFactor(1.5);
-//     ......
-// }
-
-    mainWindow.addBrowserView(browserView);
-    browserView.setBounds(message.add_browserview.bound);
-    browserView.webContents.loadURL('https://reddit.com');
-  }
-
-  if (message.get_browserviews && mainWindow) {
-    const browserviews = mainWindow.getBrowserViews();
-    console.log('browserviews', browserviews);
-    // browserviews.forEach(v => {
-    //   // v.webContents.setZoomLevel(0.5)
-    //   v.webContents.setZoomFactor(0.5)
-    // })
-    return {
-      browserviews: browserviews.length
-    }
-  }
-
-  return "foo";
-})
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -171,7 +84,7 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
-      backgroundThrottling: false, 
+      backgroundThrottling: false,
     },
   });
 
@@ -206,10 +119,6 @@ const createWindow = async () => {
   new AppUpdater();
 };
 
-/**
- * Add event listeners...
- */
-
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
@@ -229,3 +138,96 @@ app
     });
   })
   .catch(console.log);
+
+ipcMain.handle('message', async (event, message) => {
+  // do stuff
+  // await awaitableProcess();
+  if (message.browserwindow_dimension_update && mainWindow) {
+    try {
+      mainWindow.getBrowserViews().forEach((v, i) => {
+        // if (i == 0) {
+        v.setBounds(message.browserwindow_dimension_update.bound);
+        // } else {
+        //   v.setBounds({
+        //     x: 300,
+        //     y: 300,
+        //     width: 200,
+        //     height: 200
+        //   });
+        // }
+      });
+    } catch {
+      console.log(
+        'Cannot set bounds of browserview',
+        message.browserwindow_dimension_update.bound,
+      );
+    }
+  }
+
+  if (message.capture_page && mainWindow) {
+    const browserView = mainWindow.getBrowserViews().at(0);
+    if (!browserView)
+      return {
+        error: true,
+      };
+
+    const img = await browserView.webContents.capturePage();
+    return {
+      data: img?.toDataURL(),
+    };
+  }
+
+  if (message.add_browserview && mainWindow) {
+    if (mainWindow.getBrowserViews().length > 0) {
+      console.log('skipped create_browserview, only support one view for now');
+      return;
+    }
+
+    console.log('create_browserview');
+    const browserView = new BrowserView({
+      webPreferences: {
+        zoomFactor: 0.7,
+        contextIsolation: true,
+        preload: app.isPackaged
+          ? path.join(__dirname, 'browserview_preload.js')
+          : path.join(__dirname, '../../.erb/dll/browserview_preload.js'),
+      },
+    });
+
+    browserView.webContents.on('dom-ready', () => {
+      browserView.webContents.setZoomFactor(0.7);
+      if (isDebug) {
+        browserView.webContents.openDevTools();
+      }
+    });
+
+    mainWindow.addBrowserView(browserView);
+    browserView.setBounds(message.add_browserview.bound);
+    browserView.webContents.loadURL('https://reddit.com');
+  }
+
+  if (message.get_browserviews && mainWindow) {
+    const browserviews = mainWindow.getBrowserViews();
+    console.log('browserviews', browserviews);
+    // browserviews.forEach(v => {
+    //   v.webContents.setZoomFactor(0.5)
+    // })
+    return {
+      browserviews: browserviews.length,
+    };
+  }
+
+  if (message.reset && mainWindow) {
+    console.log('clearing storage...');
+    await mainWindow.webContents.session.clearStorageData();
+
+    const ps = mainWindow.getBrowserViews().map((v) => {
+      return v.webContents.session.clearStorageData();
+    });
+
+    await Promise.all(ps);
+    console.log('cleared storage');
+  }
+
+  return 'foo';
+});
