@@ -48,6 +48,31 @@ export function queryDeepSelectorAll<T>(
   return traverser(rootNode);
 }
 
+function drawRoundedDottedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+): void {
+  let r = radius;
+  if (width < 2 * radius) r = width / 2;
+  if (height < 2 * radius) r = height / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+
+  ctx.setLineDash([5, 3]); // Sets the dash pattern for dotted lines
+  ctx.stroke();
+  ctx.setLineDash([]); // Resets the dash pattern to solid line
+}
+
 function main() {
   // Create a new canvas element
   const canvas = document.createElement('canvas');
@@ -100,13 +125,12 @@ function main() {
         return false;
 
       const area = rect.width * rect.height;
-      if (area < 200) return false;
+      if (area < 400) return false;
 
       return true;
     });
 
-    console.log('visibleElements', visibleElements.length);
-    visibleElements.forEach((el, i) => {
+    visibleElements.reverse().forEach((el, i) => {
       ctx.beginPath();
       const rect = el.getBoundingClientRect();
       const seed = rect.width * rect.height;
@@ -126,12 +150,9 @@ function main() {
       // Generate a random color
       const randomColor = colors[Math.floor(hashMap(seed) * colors.length)];
 
-      ctx.beginPath();
-      ctx.rect(rect.x, rect.y, rect.width, rect.height);
-      ctx.globalAlpha = 0.6; // Set global alpha for transparency
       ctx.strokeStyle = randomColor;
       ctx.lineWidth = 2; // Set the border width
-      ctx.stroke();
+      drawRoundedDottedRect(ctx, rect.x, rect.y, rect.width, rect.height, 10); // Adjust the radius as needed
 
       // Code to add label
       const labelText = `${i}`;
@@ -152,7 +173,7 @@ function main() {
         textHeight + backgroundPadding * 2,
       );
 
-      ctx.globalAlpha = 1; // Reset global alpha to default
+      // ctx.globalAlpha = 1; // Reset global alpha to default
       // Draw the text over the background
       ctx.fillStyle = 'white'; // Text color
       ctx.fillText(
@@ -161,6 +182,11 @@ function main() {
         rect.y + backgroundPadding,
       );
     });
+
+    // console.log(
+    //   'visibleElements',
+    //   visibleElements.map((e) => e.textContent?.trim().slice(0, 40)),
+    // );
   }
 
   // // Resize initially
