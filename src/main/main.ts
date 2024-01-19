@@ -169,7 +169,7 @@ ipcMain.handle('message', async (event, message) => {
     }
   }
 
-  if (message.capture_page && mainWindow) {
+  if (message.get_browser_state && mainWindow) {
     const browserView = mainWindow.getBrowserViews().at(0);
     if (!browserView)
       return {
@@ -178,7 +178,10 @@ ipcMain.handle('message', async (event, message) => {
 
     const img = await browserView.webContents.capturePage();
     return {
-      data: img?.toDataURL(),
+      data: {
+        screenshot: img?.toDataURL(),
+        url: browserView.webContents.getURL(),
+      },
     };
   }
 
@@ -197,7 +200,7 @@ ipcMain.handle('message', async (event, message) => {
     console.log('create_browserview');
     const browserView = new BrowserView({
       webPreferences: {
-        zoomFactor: 0.7,
+        zoomFactor: 1.0,
         contextIsolation: true,
         preload: app.isPackaged
           ? path.join(__dirname, 'browserview_preload.js')
@@ -206,7 +209,7 @@ ipcMain.handle('message', async (event, message) => {
     });
 
     browserView.webContents.on('dom-ready', () => {
-      browserView.webContents.setZoomFactor(0.7);
+      browserView.webContents.setZoomFactor(1.0);
       if (isDebug) {
         browserView.webContents.openDevTools();
       }

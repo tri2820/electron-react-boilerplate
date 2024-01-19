@@ -96,7 +96,7 @@ function main() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const visibleElements = queryDeepSelectorAll((el: Element) => {
+    let visibleElements = queryDeepSelectorAll((el: Element) => {
       const clickable =
         [
           'A',
@@ -130,6 +130,20 @@ function main() {
       return true;
     });
 
+    visibleElements = visibleElements.filter((e) =>
+      visibleElements.every((x) => {
+        if (x === e) return true;
+        const re = e.getBoundingClientRect();
+        const rx = x.getBoundingClientRect();
+        const xInside =
+          re.left <= rx.left &&
+          rx.right <= re.right &&
+          re.top <= rx.top &&
+          rx.bottom <= re.bottom;
+        return !xInside;
+      }),
+    );
+
     visibleElements.reverse().forEach((el, i) => {
       ctx.beginPath();
       const rect = el.getBoundingClientRect();
@@ -156,7 +170,7 @@ function main() {
 
       // Code to add label
       const labelText = `${i}`;
-      const fontSize = 16; // Small text size
+      const fontSize = 14;
       ctx.font = `${fontSize}px Arial`; // Set font for the text
       ctx.fillStyle = 'white'; // Text color
       ctx.textBaseline = 'top'; // Align text
@@ -164,11 +178,12 @@ function main() {
       // Background for the text
       const textWidth = ctx.measureText(labelText).width;
       const textHeight = fontSize * 1.2; // Approximate text height
-      const backgroundPadding = 2;
+      const backgroundPadding = 4;
       ctx.fillStyle = randomColor; // Background color
       ctx.fillRect(
-        rect.x + rect.width,
-        rect.y,
+        rect.x,
+        // + Math.floor(rect.width / 2)
+        rect.y + rect.height,
         textWidth + backgroundPadding * 2,
         textHeight + backgroundPadding * 2,
       );
@@ -178,8 +193,10 @@ function main() {
       ctx.fillStyle = 'white'; // Text color
       ctx.fillText(
         labelText,
-        rect.x + rect.width + backgroundPadding,
-        rect.y + backgroundPadding,
+        rect.x +
+          // + Math.floor(rect.width / 2)
+          backgroundPadding,
+        rect.y + rect.height + backgroundPadding,
       );
     });
 
